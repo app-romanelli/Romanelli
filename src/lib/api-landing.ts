@@ -28,6 +28,8 @@ export interface NovoLeadPayload {
   precisa_desmontagem?: boolean;
   observacoes?: string;
   valor_estimado?: number;
+  status?: string;
+  responsavel_atendimento?: string;
 }
 
 export interface ResultadoOperacao {
@@ -73,8 +75,8 @@ export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoO
     precisa_desmontagem: dados.precisa_desmontagem ?? false,
     observacoes: dados.observacoes || null,
     valor_estimado: dados.valor_estimado || 0,
-    status: 'novo',
-    responsavel_atendimento: 'Atendimento Geral',
+    status: dados.status || 'novo',
+    responsavel_atendimento: dados.responsavel_atendimento || 'Atendimento Geral',
     created_at: new Date().toISOString()
   };
 
