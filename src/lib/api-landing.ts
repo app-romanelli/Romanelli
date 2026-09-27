@@ -1,0 +1,141 @@
+/**
+ * Integração da Landing Page com o Supabase / Painel de Gestão Romanelli
+ */
+
+export interface NovoLeadPayload {
+  nome: string;
+  whatsapp: string;
+  email?: string;
+  servico_tipo?: string;
+  origem_endereco?: string;
+  origem_numero?: string;
+  origem_cep?: string;
+  origem_cidade?: string;
+  origem_uf?: string;
+  origem_tipo_imovel?: string;
+  origem_tem_elevador?: boolean;
+  origem_andar?: number;
+  destino_endereco?: string;
+  destino_numero?: string;
+  destino_cep?: string;
+  destino_cidade?: string;
+  destino_uf?: string;
+  destino_tipo_imovel?: string;
+  destino_tem_elevador?: boolean;
+  destino_andar?: number;
+  data_prevista?: string;
+  precisa_embalagem?: boolean;
+  precisa_desmontagem?: boolean;
+  observacoes?: string;
+  valor_estimado?: number;
+}
+
+export interface ResultadoOperacao {
+  sucesso: boolean;
+  mensagem: string;
+  id?: string;
+  dados?: any;
+}
+
+/**
+ * Salva um novo orçamento/lead no banco de dados Supabase e em cache de contingência
+ */
+export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoOperacao> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://aucbnksrhgzpsvpdcvji.supabase.co';
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Y2Jua3NyaGd6cHN2cGRjdmppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzAzMTAsImV4cCI6MjEwNjEwNjMxMH0.ysMEfpERwshllLvbAsVqe11M5vbIHloo5pncEGY9-jU';
+
+  // Sanitização do WhatsApp (apenas dígitos numéricos)
+  const cleanPhone = (dados.whatsapp || '').replace(/\D/g, '');
+
+  const payload = {
+    nome: dados.nome.trim(),
+    whatsapp: cleanPhone,
+    email: dados.email?.trim() || null,
+    servico_tipo: dados.servico_tipo || 'Residencial',
+    origem_endereco: dados.origem_endereco || null,
+    origem_numero: dados.origem_numero || null,
+    origem_cep: dados.origem_cep || null,
+    origem_cidade: dados.origem_cidade || 'Pouso Alegre',
+    origem_uf: dados.origem_uf || 'MG',
+    origem_tipo_imovel: dados.origem_tipo_imovel || 'casa',
+    origem_tem_elevador: dados.origem_tem_elevador ?? false,
+    origem_andar: dados.origem_andar ?? 0,
+    destino_endereco: dados.destino_endereco || null,
+    destino_numero: dados.destino_numero || null,
+    destino_cep: dados.destino_cep || null,
+    destino_cidade: dados.destino_cidade || null,
+    destino_uf: dados.destino_uf || 'MG',
+    destino_tipo_imovel: dados.destino_tipo_imovel || 'casa',
+    destino_tem_elevador: dados.destino_tem_elevador ?? false,
+    destino_andar: dados.destino_andar ?? 0,
+    data_prevista: dados.data_prevista || null,
+    precisa_embalagem: dados.precisa_embalagem ?? false,
+    precisa_desmontagem: dados.precisa_desmontagem ?? false,
+    observacoes: dados.observacoes || null,
+    valor_estimado: dados.valor_estimado || 0,
+    status: 'novo',
+    responsavel_atendimento: 'Atendimento Geral',
+    created_at: new Date().toISOString()
+  };
+
+  // 1. Armazena no localStorage como contingência offline
+  try {
+    const backupKey = 'romanelli_leads_backup';
+    const existentes = JSON.parse(localStorage.getItem(backupKey) || '[]');
+    existentes.unshift(payload);
+    localStorage.setItem(backupKey, JSON.stringify(existentes.slice(0, 50)));
+  } catch (err) {
+    console.warn('[Romanelli CRM] Falha ao gravar backup local:', err);
+  }
+
+  // 2. Se as credenciais do Supabase estiverem configuradas, envia via REST direto
+  if (supabaseUrl && supabaseAnonKey) {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/orcamentos_leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Romanelli CRM] Erro na resposta Supabase:', response.status, errorText);
+        return {
+          sucesso: false,
+          mensagem: `Erro do servidor (${response.status}): ${errorText}`
+        };
+      }
+
+      const resData = await response.json();
+      const novoId = Array.isArray(resData) && resData[0] ? resData[0].id : undefined;
+
+      return {
+        sucesso: true,
+        mensagem: 'Orçamento cadastrado com sucesso no sistema!',
+        id: novoId,
+        dados: resData
+      };
+    } catch (netErr: any) {
+      console.error('[Romanelli CRM] Falha de conexão com Supabase:', netErr);
+      return {
+        sucesso: true, // Gravado no backup local
+        mensagem: 'Salvo em contingência local devido a falha de conexão.'
+      };
+    }
+  }
+
+  // Se o Supabase ainda não estiver configurado no .env, registra localmente com sucesso
+  return {
+    sucesso: true,
+    mensagem: 'Lead registrado em modo local (aguardando credenciais VITE_SUPABASE_URL).'
+  };
+}
+
+// Alias para compatibilidade com o formato submeterLeadRest
+export const submeterLeadRest = salvarNovoLead;
+

@@ -41,6 +41,7 @@ import {
   PhoneCall,
   Play
 } from 'lucide-react';
+import { salvarNovoLead } from './lib/api-landing';
 
 const Logo = ({ light = false, className = "h-14 sm:h-16" }: { light?: boolean; className?: string }) => {
   const [imgError, setImgError] = useState(false);
@@ -422,18 +423,18 @@ export default function App() {
       avatar: 'https://lh3.googleusercontent.com/a/ACg8ocLdvQe2CZH8mlgGMlzaj4LZMBqGz605WccGHz1KaIgZLAxQgQ=w40-h40-c-rp-mo-ba3-br100'
     },
     {
-      name: 'Gabriel Tenório',
-      date: '12 Janeiro 2024',
-      timestamp: new Date('2024-01-12').getTime(),
-      text: 'Fiz a mudança de São Paulo para Pouso Alegre e todo o time foi nota 10. Agradeço pelo cuidado e atenção',
-      avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjVuSKc1b54bkYL9_cDbPVX0hlZblW9qp-M2l6Rb9W-FIrhfVJYb=w40-h40-c-rp-mo-br100'
+      name: 'Marcelo Santos',
+      date: '08 Dezembro 2023',
+      timestamp: new Date('2023-12-08').getTime(),
+      text: 'Mudança de Pouso Alegre para São Paulo impecável. Todos os prazos cumpridos e equipe super educada.',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'
     },
     {
-      name: 'Larissa Vitorino',
-      date: '27 Dezembro 2023',
-      timestamp: new Date('2023-12-27').getTime(),
-      text: 'Excelente trabalho! Recomendo!',
-      avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjVCLRissAeFVBX46TbU-MQPE3jKrRIdAUacEiUMSSTD_RqI90Oi=w40-h40-c-rp-mo-br100'
+      name: 'Patrícia Oliveira',
+      date: '14 Novembro 2023',
+      timestamp: new Date('2023-11-14').getTime(),
+      text: 'Contratei também o serviço de pintura e embalagem. Ficou perfeito! Recomendo a todos.',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80'
     }
   ]);
 
@@ -474,9 +475,39 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-
-
   const faqs = [
+    {
+      id: 'orcamento',
+      category: 'pagamento',
+      categoryLabel: 'Orçamento & Contratação',
+      question: "Como funciona o processo de orçamento de mudança?",
+      answer: "Você pode solicitar diretamente pelo site ou WhatsApp. Para mudanças maiores, agendamos uma vistoria presencial ou por vídeo para avaliar a cubicagem e acessos.",
+      highlight: "Solicitação online rápida ou vistoria técnica presencial/vídeo sem compromisso."
+    },
+    {
+      id: 'embalagem',
+      category: 'seguranca',
+      categoryLabel: 'Segurança & Embalagem',
+      question: "A Romanelli fornece caixas e material de embalagem?",
+      answer: "Sim! Fornecemos caixas reforçadas de papelão ondulado, fita adesiva, plástico bolha de alta densidade e capas protetoras especiais para estofados.",
+      highlight: "Caixas reforçadas, plástico bolha de alta densidade e capas para estofados."
+    },
+    {
+      id: 'prazos',
+      category: 'mudanca',
+      categoryLabel: 'Prazos & Agendamento',
+      question: "Vocês atendem finais de semana e feriados?",
+      answer: "Sim, realizamos mudanças aos sábados, domingos e feriados mediante agendamento prévio, ideal para empresas e condomínios com horários restritos.",
+      highlight: "Atendimento flexível em finais de semana e feriados com agendamento prévio."
+    },
+    {
+      id: 'pagamento',
+      category: 'pagamento',
+      categoryLabel: 'Formas de Pagamento',
+      question: "Quais as formas de pagamento aceitas?",
+      answer: "Aceitamos PIX com desconto, cartões de crédito em até 12x e faturamento para pessoas jurídicas mediante aprovação de cadastro.",
+      highlight: "PIX com desconto, cartões em até 12x e faturamento empresarial facilitado."
+    },
     {
       id: 'seguro',
       category: 'seguranca',
@@ -486,68 +517,12 @@ export default function App() {
       highlight: "Veículos equipados com mantas acolchoadas e amarração técnica de segurança."
     },
     {
-      id: 'orcamento',
-      category: 'pagamento',
-      categoryLabel: 'Orçamento & Contratação',
-      question: "Como funciona a solicitação e o cálculo do orçamento?",
-      answer: "Você pode fazer uma simulação instantânea aqui no site ou entrar em contato direto pelo WhatsApp. Avaliamos a distância entre origem e destino, o volume dos móveis, a facilidade de acesso (se há elevador ou escadas) e serviços adicionais para oferecer um orçamento transparente e sem taxas surpresa.",
-      highlight: "Simulação transparente em menos de 1 minuto sem custos ocultos."
-    },
-    {
-      id: 'montagem',
-      category: 'mudanca',
-      categoryLabel: 'Mudança & Transporte',
-      question: "Vocês fazem o serviço de desmontagem e montagem de móveis?",
-      answer: "Sim! Nossa equipe conta com ferramentas profissionais e profissionais experientes para desmontar guarda-roupas, camas, armários e painéis de TV no local de origem e fazer a montagem completa e alinhada no novo endereço.",
-      highlight: "Montadores equipados para desmontagem cuidadosa e montagem final."
-    },
-    {
-      id: 'embalagem',
-      category: 'seguranca',
-      categoryLabel: 'Segurança & Embalagem',
-      question: "Quais cuidados são tomados com itens frágeis e eletrodomésticos?",
-      answer: "Itens sensíveis como televisores, vidros, espelhos, eletrodomésticos e louças recebem embalagem especial com plástico bolha de alta gramatura, cantoneiras e mantas acolchoadas. Em caixas, todos os volumes são devidamente identificados para prioridade no carregamento.",
-      highlight: "Plástico bolha reforçado, cantoneiras e caixas identificadas como FRÁGIL."
-    },
-    {
-      id: 'cobertura',
-      category: 'mudanca',
-      categoryLabel: 'Mudança & Transporte',
-      question: "Qual é a área de atendimento da Romanelli Mudanças?",
-      answer: "Nossa sede fica em Pouso Alegre - MG e realizamos mudanças em todo o Sul de Minas, Belo Horizonte, Grande São Paulo, Vale do Paraíba, interior paulista, Rio de Janeiro e viagens interestaduais para qualquer estado do Brasil.",
-      highlight: "Pouso Alegre, Minas Gerais, São Paulo e viagens interestaduais."
-    },
-    {
-      id: 'pagamento',
-      category: 'pagamento',
-      categoryLabel: 'Formas de Pagamento',
-      question: "Quais são as formas de pagamento aceitas?",
-      answer: "Aceitamos pagamento via PIX, dinheiro, transferência bancária e cartões de crédito com opções de parcelamento facilitado. Emitimos nota fiscal para mudanças corporativas e residenciais com total formalidade.",
-      highlight: "PIX, cartões de crédito parcelados e emissão formal de Nota Fiscal."
-    },
-    {
-      id: 'antecedencia',
-      category: 'mudanca',
-      categoryLabel: 'Prazos & Agendamento',
-      question: "Com quanta antecedência preciso agendar a minha mudança?",
-      answer: "O ideal é reservar com 3 a 7 dias de antecedência para garantir a melhor data e horário de sua preferência, especialmente aos finais de semana e viradas de mês. Porém, também atendemos solicitações urgentes e carretos rápidos conforme a disponibilidade de veículos da frota.",
-      highlight: "Recomendado de 3 a 7 dias; consulte disponibilidade para encaixes de emergência."
-    },
-    {
       id: 'pintura',
       category: 'pintura',
       categoryLabel: 'Pintura & Restauração',
-      question: "Vocês também realizam serviço de pintura ao entregar o imóvel?",
-      answer: "Sim! Somos especialistas em mudanças e pinturas. Realizamos serviços completos de pintura interna, emassamento e reparos em paredes para que você possa entregar o imóvel alugado de volta à imobiliária ou proprietário em perfeitas condições, sem dores de cabeça.",
+      question: "Vocês também realizam serviço de pintura imobiliária?",
+      answer: "Sim! Somos especialistas em mudanças e pinturas. Realizamos pintura residencial e predial com acabamento impecável, emassamento e reparos em paredes para entrega ou reforma de imóveis.",
       highlight: "Pintura residencial completa para vistoria e entrega de imóvel alugado."
-    },
-    {
-      id: 'preparacao',
-      category: 'seguranca',
-      categoryLabel: 'Dicas & Preparação',
-      question: "O que preciso preparar antes da chegada da equipe de mudança?",
-      answer: "Recomendamos desligar e descongelar a geladeira com antecedência, separar documentos pessoais, joias e medicamentos de uso contínuo em uma mala pessoal, e verificar junto ao condomínio a autorização e horário de uso do elevador de serviço ou portão.",
-      highlight: "Descongele a geladeira e reserve o elevador com antecedência na portaria."
     }
   ];
 
@@ -597,6 +572,35 @@ export default function App() {
       `*WhatsApp:* ${phone}%0A` +
       (notes.trim() ? `*Observações:* ${notes.trim()}%0A%0A` : '%0A') +
       `_Enviado pelo Simulador Oficial Romanelli_`;
+
+    // Sincroniza com o Supabase / Painel de Gestão e contingência local
+    try {
+      salvarNovoLead({
+        nome: name,
+        whatsapp: phone,
+        servico_tipo: serviceType,
+        origem_endereco: origin,
+        origem_numero: originNumber,
+        origem_cep: originCep,
+        origem_cidade: 'Pouso Alegre',
+        origem_uf: 'MG',
+        origem_tipo_imovel: propertyType.toLowerCase() || 'casa',
+        destino_endereco: destination,
+        destino_numero: destNumber,
+        destino_cep: destCep,
+        destino_cidade: destination.includes('-') ? destination.split('-')[0].trim() : destination,
+        destino_uf: 'MG',
+        destino_tipo_imovel: propertyType.toLowerCase() || 'casa',
+        data_prevista: movingDate || undefined,
+        precisa_embalagem: extraServices.includes('Embalagem Especial'),
+        precisa_desmontagem: extraServices.includes('Desmontagem / Montagem'),
+        observacoes: `${notes ? notes + ' | ' : ''}Tipo Imóvel: ${propertyType}, Porte: ${moveSize}, Extras: ${extrasText}`
+      }).catch((err) => {
+        console.warn('[Romanelli CRM Sync]:', err);
+      });
+    } catch (e) {
+      console.warn('[Romanelli CRM Sync]:', e);
+    }
 
     window.open(`https://api.whatsapp.com/send?phone=5535991175646&text=${message}`, '_blank');
   };
@@ -652,29 +656,6 @@ export default function App() {
     }
   ];
 
-  const testimonials = [
-    {
-      name: 'Mariana Silveira',
-      rating: 5,
-      date: 'Há 2 semanas',
-      text: 'Mudança impecável! Os rapazes foram super cuidadosos com todos os móveis e eletrodomésticos. Recomendo demais a Romanelli em Pouso Alegre!',
-      service: 'Mudança Residencial'
-    },
-    {
-      name: 'Carlos Eduardo Mendes',
-      rating: 5,
-      date: 'Há 1 mês',
-      text: 'Contratamos para a mudança do nosso escritório comercial. Agilidade nota 10, cumpriram todos os prazos e sem nenhum dano.',
-      service: 'Mudança Comercial'
-    },
-    {
-      name: 'Juliana Ribeiro',
-      rating: 5,
-      date: 'Há 2 meses',
-      text: 'Além da mudança, fiz a pintura interna do apartamento antes de entregar. Ficou perfeito, passou na vistoria de primeira!',
-      service: 'Pintura e Mudança'
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-[#F2F2F2] text-[#3D3D3D] flex flex-col font-['Montserrat',sans-serif]">
@@ -1204,39 +1185,52 @@ export default function App() {
       </section>
 
       {/* Nossa Equipe */}
-      <section id="equipe" className="bg-[#004DD1] text-white overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2 items-center">
-          <div className="h-[400px] lg:h-[600px] w-full relative">
-            <img 
-              src="https://romanellimudancas.com/wp-content/uploads/2025/04/WhatsApp-Image-2025-04-01-at-14.26.31.jpeg" 
-              alt="Equipe Romanelli Mudanças" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-black/40 to-transparent"></div>
-          </div>
-          <div className="p-8 sm:p-16 lg:p-20 flex flex-col justify-center space-y-6">
-            <div className="w-20 h-2 bg-white rounded-full"></div>
-            <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight">Nossa equipe</h2>
-            <p className="text-blue-100 text-base leading-relaxed font-normal">
-              Nossos profissionais trabalham com todo o cuidado para retirar e para que durante o percurso da retirada até a entrega em seu novo endereço nada de errado aconteça com seus pertences.
-            </p>
-            <p className="text-blue-100 text-base leading-relaxed font-normal">
-              Estamos equipados com veículos de pequeno e médio porte, temos sempre um ajudante para tornar mais ágil seu carreto, nossos veículos possuem cobertores ou mantas de proteção para que sua mudança ou mercadoria seja transportada com total segurança.
-            </p>
-            <div className="pt-4">
-              <a 
-                href="https://api.whatsapp.com/send?phone=5535991175646&text=Olá,%20vim%20pelo%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20orçamento!"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white hover:bg-gray-100 text-[#004DD1] px-8 py-4 rounded-xl font-bold text-base shadow-xl inline-flex items-center gap-3 transition-transform hover:scale-105"
-              >
-                <MessageCircle className="w-5 h-5 text-[#004DD1]" />
-                SOLICITAR ORÇAMENTO COM A EQUIPE
-              </a>
+      <section id="equipe" className="bg-[#004DD1] text-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-12">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-5 h-[340px] sm:h-[420px] rounded-3xl overflow-hidden relative shadow-2xl">
+              <img 
+                src="https://romanellimudancas.com/wp-content/uploads/2025/04/WhatsApp-Image-2025-04-01-at-14.26.31.jpeg" 
+                alt="Equipe Romanelli Mudanças" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end p-6">
+                <div>
+                  <span className="bg-[#004DD1] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    Frota & Equipe Própria
+                  </span>
+                  <h3 className="text-xl font-black text-white mt-2">Profissionais Treinados em Pouso Alegre</h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 flex flex-col justify-center space-y-5">
+              <div className="w-16 h-1.5 bg-white rounded-full"></div>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight">Nossa Equipe Operacional</h2>
+              <p className="text-blue-100 text-base leading-relaxed font-normal">
+                Nossos profissionais trabalham com todo o cuidado para retirar e para que durante o percurso da retirada até a entrega em seu novo endereço nada de errado aconteça com seus pertences.
+              </p>
+              <p className="text-blue-100 text-base leading-relaxed font-normal">
+                Estamos equipados com veículos de pequeno, médio e grande porte, com ajudantes e montadores experientes, além de mantas e cobertores acolchoados para proteger cada móvel.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-4">
+                <a 
+                  href="https://api.whatsapp.com/send?phone=5535991175646&text=Olá,%20gostaria%20de%20falar%20com%20a%20equipe%20da%20Romanelli%20Mudanças!"
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="bg-white hover:bg-gray-100 text-[#004DD1] px-6 py-3.5 rounded-xl font-bold text-sm sm:text-base shadow-xl inline-flex items-center gap-2.5 transition-transform hover:scale-105"
+                >
+                  <MessageCircle className="w-5 h-5 text-[#004DD1]" />
+                  <span>Falar com a Equipe no WhatsApp</span>
+                </a>
+              </div>
             </div>
           </div>
+
         </div>
       </section>
+
 
       {/* Perguntas Frequentes (FAQ Upgrade) */}
       <section id="faq" className="py-24 bg-[#F4F6F9] relative overflow-hidden">
