@@ -1,5 +1,5 @@
 /**
- * Integração da Landing Page com o Supabase / Painel de Gestão Romanelli
+ * Integração da Landing Page com o Supabase & Webhook do Painel de Gestão Romanelli
  * Interceptador com geração de ID de Chamado / Protocolo Tenant
  */
 
@@ -50,6 +50,13 @@ export interface ResultadoOperacao {
 }
 
 /**
+ * URL Oficial do Webhook do Painel de Gestão Romanelli
+ */
+export const WEBHOOK_URL_PAINEL = 
+  import.meta.env.VITE_WEBHOOK_URL || 
+  'https://ais-dev-7bgvptte2p4vfmxfmseqts-873734549704.us-east1.run.app/api/webhook/romanelli-hook-5hg9oiad';
+
+/**
  * Gera um protocolo único no padrão ROM-XXXXXX
  */
 export function gerarProtocoloChamado(): string {
@@ -58,27 +65,24 @@ export function gerarProtocoloChamado(): string {
 }
 
 /**
- * Salva um novo orçamento/lead no banco de dados Supabase e em cache de contingência
+ * Intercepta e salva o lead disparando diretamente para o Webhook do Painel de Gestão + Supabase
  */
 export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoOperacao> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://aucbnksrhgzpsvpdcvji.supabase.co';
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Y2Jua3NyaGd6cHN2cGRjdmppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzAzMTAsImV4cCI6MjEwNjEwNjMxMH0.ysMEfpERwshllLvbAsVqe11M5vbIHloo5pncEGY9-jU';
-
-  // Sanitização do WhatsApp (apenas dígitos numéricos)
   const cleanPhone = (dados.whatsapp || '').replace(/\D/g, '');
-
-  // Garante a existência do Protocolo / ID do chamado
   const protocoloGerado = dados.protocolo || dados.id_chamado || gerarProtocoloChamado();
-  const idTenant = dados.id_tenant || 'romanelli-default';
+  const idTenant = dados.id_tenant || 'romanelli-pouso-alegre';
 
   const payload = {
     protocolo: protocoloGerado,
     id_chamado: protocoloGerado,
     id_tenant: idTenant,
+    tenant_id: idTenant,
     nome: dados.nome.trim(),
     whatsapp: cleanPhone,
+    telefone: cleanPhone,
     email: dados.email?.trim() || null,
     servico_tipo: dados.servico_tipo || 'Residencial',
+    tipo_servico: dados.servico_tipo || 'Residencial',
     origem_endereco: dados.origem_endereco || null,
     origem_numero: dados.origem_numero || null,
     origem_cep: dados.origem_cep || null,
@@ -101,7 +105,8 @@ export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoO
     observacoes: dados.observacoes || null,
     valor_estimado: dados.valor_estimado || 0,
     status: dados.status || 'novo',
-    responsavel_atendimento: dados.responsavel_atendimento || 'Atendimento Geral',
+    responsavel_atendimento: dados.responsavel_atendimento || 'Davi Romanelli',
+    origem_lead: 'Landing Page Simulador',
     created_at: new Date().toISOString()
   };
 
@@ -115,10 +120,39 @@ export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoO
     console.warn('[Romanelli CRM] Falha ao gravar backup local:', err);
   }
 
-  // 2. Se as credenciais do Supabase estiverem configuradas, envia via REST direto
+  // 2. Disparo Direto para o Webhook do Painel de Gestão (Hook Principal)
+  let webhookSucesso = false;
+  if (WEBHOOK_URL_PAINEL) {
+    try {
+      console.log('[Romanelli CRM] Enviando lead para o Webhook do Painel:', WEBHOOK_URL_PAINEL);
+      const resHook = await fetch(WEBHOOK_URL_PAINEL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (resHook.ok) {
+        console.log('[Romanelli CRM] Webhook acionado com sucesso!');
+        webhookSucesso = true;
+      } else {
+        const errText = await resHook.text();
+        console.warn('[Romanelli CRM] Webhook respondeu status:', resHook.status, errText);
+      }
+    } catch (hookErr) {
+      console.warn('[Romanelli CRM] Falha ao disparar webhook:', hookErr);
+    }
+  }
+
+  // 3. Gravação em Paralelo no Supabase (se configurado)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://aucbnksrhgzpsvpdcvji.supabase.co';
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Y2Jua3NyaGd6cHN2cGRjdmppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzAzMTAsImV4cCI6MjEwNjEwNjMxMH0.ysMEfpERwshllLvbAsVqe11M5vbIHloo5pncEGY9-jU';
+
   if (supabaseUrl && supabaseAnonKey) {
     try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/orcamentos_leads`, {
+      await fetch(`${supabaseUrl}/rest/v1/orcamentos_leads`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,42 +162,16 @@ export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoO
         },
         body: JSON.stringify(payload)
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[Romanelli CRM] Erro na resposta Supabase:', response.status, errorText);
-        return {
-          sucesso: true, // Não bloqueia o usuário; protocolo foi gerado e salvo no backup local
-          mensagem: `Registrado localmente (Aviso Supabase: ${response.status})`,
-          protocolo: protocoloGerado,
-          id: protocoloGerado
-        };
-      }
-
-      const resData = await response.json();
-      const novoId = Array.isArray(resData) && resData[0] ? (resData[0].id || protocoloGerado) : protocoloGerado;
-
-      return {
-        sucesso: true,
-        mensagem: 'Orçamento cadastrado com sucesso no sistema!',
-        id: String(novoId),
-        protocolo: protocoloGerado,
-        dados: resData
-      };
-    } catch (netErr: any) {
-      console.error('[Romanelli CRM] Falha de conexão com Supabase:', netErr);
-      return {
-        sucesso: true, // Gravado no backup local com protocolo
-        mensagem: 'Salvo em contingência local devido a falha de conexão.',
-        protocolo: protocoloGerado,
-        id: protocoloGerado
-      };
+    } catch (sbErr) {
+      console.warn('[Romanelli CRM] Supabase fallback warning:', sbErr);
     }
   }
 
   return {
     sucesso: true,
-    mensagem: 'Lead registrado em modo local.',
+    mensagem: webhookSucesso 
+      ? 'Chamado enviado com sucesso ao Painel de Gestão!' 
+      : 'Chamado registrado com sucesso!',
     protocolo: protocoloGerado,
     id: protocoloGerado
   };
