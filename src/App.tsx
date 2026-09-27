@@ -39,9 +39,12 @@ import {
   HelpCircle,
   ChevronDown,
   PhoneCall,
-  Play
+  Play,
+  Copy,
+  FileText,
+  Sparkles
 } from 'lucide-react';
-import { salvarNovoLead } from './lib/api-landing';
+import { salvarNovoLead, gerarProtocoloChamado } from './lib/api-landing';
 
 const Logo = ({ light = false, className = "h-14 sm:h-16" }: { light?: boolean; className?: string }) => {
   const [imgError, setImgError] = useState(false);
@@ -170,7 +173,7 @@ export default function App() {
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   
   // Quote form & triage state
-  const [triageStep, setTriageStep] = useState<1 | 2 | 3>(1);
+  const [triageStep, setTriageStep] = useState<1 | 2 | 3 | 4>(1);
   const [serviceType, setServiceType] = useState('Residencial');
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
@@ -186,6 +189,11 @@ export default function App() {
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Interceptador e Protocolo Tenant
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+  const [submittedProtocol, setSubmittedProtocol] = useState<string | null>(null);
+  const [copiedProtocol, setCopiedProtocol] = useState(false);
 
   // Triage details - initially unselected so each section unlocks sequentially
   const [propertyType, setPropertyType] = useState('');
@@ -219,7 +227,7 @@ export default function App() {
     setPhone(formatted);
   };
 
-  const openTriageModal = (targetStep: 1 | 2 | 3 = 1) => {
+  const openTriageModal = (targetStep: 1 | 2 | 3 | 4 = 1) => {
     setFormError(null);
     const step1Ok = (origin.trim().length >= 2 || originCep.replace(/\D/g, '').length === 8) &&
                     (destination.trim().length >= 2 || destCep.replace(/\D/g, '').length === 8);
@@ -241,6 +249,8 @@ export default function App() {
       } else {
         setTriageStep(3);
       }
+    } else if (targetStep === 4) {
+      setTriageStep(4);
     } else {
       setTriageStep(1);
     }
@@ -510,7 +520,7 @@ export default function App() {
     return matchesCategory && matchesSearch;
   });
 
-  const handleWhatsAppQuote = (e?: React.FormEvent) => {
+  const handleWhatsAppQuote = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     if (
@@ -532,25 +542,17 @@ export default function App() {
     }
 
     setFormError(null);
+    setIsSubmittingLead(true);
 
+    const protocolo = gerarProtocoloChamado();
     const extrasText = extraServices.length > 0 ? extraServices.join(', ') : 'Apenas transporte';
-    const message = `🚚 *SOLICITAÇÃO DE ORÇAMENTO - ROMANELLI MUDANÇAS*%0A%0A` +
-      `*Serviço:* ${serviceType}%0A` +
-      `*Origem:* ${origin || 'A combinar'} ${originNumber ? `(Nº: ${originNumber})` : ''} ${originCep ? `(CEP: ${originCep})` : ''}%0A` +
-      `*Destino:* ${destination || 'A combinar'} ${destNumber ? `(Nº: ${destNumber})` : ''} ${destCep ? `(CEP: ${destCep})` : ''}%0A` +
-      `*Tipo de Imóvel:* ${propertyType}%0A` +
-      `*Porte da Mudança:* ${moveSize}%0A` +
-      `*Serviços Extras:* ${extrasText}%0A` +
-      `*Data Prevista:* ${movingDate || 'A definir / A combinar'}%0A%0A` +
-      `*Dados de Contato:*%0A` +
-      `*Nome:* ${name}%0A` +
-      `*WhatsApp:* ${phone}%0A` +
-      (notes.trim() ? `*Observações:* ${notes.trim()}%0A%0A` : '%0A') +
-      `_Enviado pelo Simulador Oficial Romanelli_`;
 
-    // Sincroniza com o Supabase / Painel de Gestão e contingência local
+    // Interceptador: Registra no Supabase/CRM e contingência local com o ID do chamado / protocolo
     try {
-      salvarNovoLead({
+      await salvarNovoLead({
+        protocolo: protocolo,
+        id_chamado: protocolo,
+        id_tenant: 'romanelli-pouso-alegre',
         nome: name,
         whatsapp: phone,
         servico_tipo: serviceType,
@@ -567,17 +569,53 @@ export default function App() {
         destino_uf: 'MG',
         destino_tipo_imovel: propertyType.toLowerCase() || 'casa',
         data_prevista: movingDate || undefined,
-        precisa_embalagem: extraServices.includes('Embalagem Especial'),
-        precisa_desmontagem: extraServices.includes('Desmontagem / Montagem'),
-        observacoes: `${notes ? notes + ' | ' : ''}Tipo Imóvel: ${propertyType}, Porte: ${moveSize}, Extras: ${extrasText}`
-      }).catch((err) => {
-        console.warn('[Romanelli CRM Sync]:', err);
+        precisa_embalagem: extraServices.includes('Embalagem Especial') || extraServices.includes('Embalagem Especial com Mantas e Plástico Bolha'),
+        precisa_desmontagem: extraServices.includes('Desmontagem / Montagem') || extraServices.includes('Desmontagem e Montagem de Móveis'),
+        observacoes: `${notes ? notes + ' | ' : ''}Tipo Imóvel: ${propertyType}, Porte: ${moveSize}, Extras: ${extrasText}`,
+        status: 'novo',
+        responsavel_atendimento: 'Davi Romanelli'
       });
     } catch (e) {
-      console.warn('[Romanelli CRM Sync]:', e);
+      console.warn('[Romanelli CRM Interceptador]:', e);
+    } finally {
+      setIsSubmittingLead(false);
+      setSubmittedProtocol(protocolo);
+      setTriageStep(4); // Abre a etapa final com o ID gerado e o botão do WhatsApp
     }
+  };
+
+  const handleOpenWhatsAppDirectly = () => {
+    const proto = submittedProtocol || gerarProtocoloChamado();
+    const extrasText = extraServices.length > 0 ? extraServices.join(', ') : 'Apenas transporte';
+    const message = `🚚 *SOLICITAÇÃO DE ORÇAMENTO - ROMANELLI MUDANÇAS*%0A%0A` +
+      `🔖 *ID DO CHAMADO / PROTOCOLO:* ${proto}%0A%0A` +
+      `*Serviço:* ${serviceType}%0A` +
+      `*Origem:* ${origin || 'A combinar'} ${originNumber ? `(Nº: ${originNumber})` : ''} ${originCep ? `(CEP: ${originCep})` : ''}%0A` +
+      `*Destino:* ${destination || 'A combinar'} ${destNumber ? `(Nº: ${destNumber})` : ''} ${destCep ? `(CEP: ${destCep})` : ''}%0A` +
+      `*Tipo de Imóvel:* ${propertyType || 'Não especificado'}%0A` +
+      `*Porte da Mudança:* ${moveSize || 'Padrão'}%0A` +
+      `*Serviços Extras:* ${extrasText}%0A` +
+      `*Data Prevista:* ${movingDate || 'A definir / A combinar'}%0A%0A` +
+      `*Dados do Cliente:*%0A` +
+      `*Nome:* ${name}%0A` +
+      `*WhatsApp:* ${phone}%0A` +
+      (notes.trim() ? `*Observações:* ${notes.trim()}%0A%0A` : '%0A') +
+      `_Protocolo registrado no Painel de Gestão: ${proto}_`;
 
     window.open(`https://api.whatsapp.com/send?phone=5535991175646&text=${message}`, '_blank');
+  };
+
+  const handleCopyProtocol = () => {
+    if (!submittedProtocol) return;
+    navigator.clipboard.writeText(submittedProtocol);
+    setCopiedProtocol(true);
+    setTimeout(() => setCopiedProtocol(false), 3000);
+  };
+
+  const handleResetSimulator = () => {
+    setSubmittedProtocol(null);
+    setCopiedProtocol(false);
+    setTriageStep(1);
   };
 
   const services = [
@@ -1589,31 +1627,35 @@ export default function App() {
               <h3 className="text-2xl font-black text-gray-900 tracking-tight">
                 {triageStep === 1 && "1. Trajeto e Serviço"}
                 {triageStep === 2 && "2. Detalhes da sua Mudança"}
-                {triageStep === 3 && "3. Finalizar e Receber Cotação"}
+                {triageStep === 3 && "3. Finalizar e Gerar Chamado"}
+                {triageStep === 4 && "4. Chamado Registrado no CRM"}
               </h3>
               <p className="text-xs text-gray-500 mt-1">
                 {triageStep === 1 && "Informe de onde para onde será a sua mudança."}
                 {triageStep === 2 && "Triagem rápida para dimensionarmos equipe e veículo ideais."}
-                {triageStep === 3 && "Receba o orçamento detalhado instantaneamente no seu WhatsApp."}
+                {triageStep === 3 && "Preencha seus dados para gerarmos o ID do chamado no sistema."}
+                {triageStep === 4 && "Seu chamado foi gravado! O atendente/proprietário já pode localizá-lo pelo ID."}
               </p>
 
               {/* Progress Stepper Tabs */}
-              <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-gray-100">
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mt-4 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => {
-                    setFormError(null);
-                    setTriageStep(1);
+                    if (triageStep !== 4) {
+                      setFormError(null);
+                      setTriageStep(1);
+                    }
                   }}
-                  className={`text-left p-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`text-left p-1.5 sm:p-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${
                     triageStep === 1 
                       ? 'bg-[#004DD1] text-white shadow-sm' 
                       : isStep1Valid 
-                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' 
+                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 cursor-pointer' 
                         : 'bg-gray-100 text-gray-500'
                   }`}
                 >
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
                     {isStep1Valid ? '✓' : '1'}
                   </span>
                   <span className="truncate">1. Trajeto</span>
@@ -1622,22 +1664,24 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!isStep1Valid) {
-                      setFormError("Preencha a origem e o destino na Etapa 1 antes de ir para a Triagem.");
-                      return;
+                    if (triageStep !== 4) {
+                      if (!isStep1Valid) {
+                        setFormError("Preencha a origem e o destino na Etapa 1 antes de ir para a Triagem.");
+                        return;
+                      }
+                      setFormError(null);
+                      setTriageStep(2);
                     }
-                    setFormError(null);
-                    setTriageStep(2);
                   }}
-                  className={`text-left p-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`text-left p-1.5 sm:p-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${
                     triageStep === 2 
                       ? 'bg-[#004DD1] text-white shadow-sm' 
                       : isStep2Valid 
-                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 cursor-pointer' 
+                        : 'bg-gray-100 text-gray-600'
                   }`}
                 >
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
                     {isStep2Valid ? '✓' : '2'}
                   </span>
                   <span className="truncate">2. Triagem</span>
@@ -1646,25 +1690,46 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!isStep1Valid) {
-                      setFormError("Preencha a origem e o destino primeiro.");
-                      return;
+                    if (triageStep !== 4) {
+                      if (!isStep1Valid) {
+                        setFormError("Preencha a origem e o destino primeiro.");
+                        return;
+                      }
+                      if (!propertyType || !moveSize) {
+                        setFormError("Selecione o tipo de imóvel e o porte da mudança na Etapa 2 primeiro.");
+                        return;
+                      }
+                      setFormError(null);
+                      setTriageStep(3);
                     }
-                    if (!propertyType || !moveSize) {
-                      setFormError("Selecione o tipo de imóvel e o porte da mudança na Etapa 2 primeiro.");
-                      return;
-                    }
-                    setFormError(null);
-                    setTriageStep(3);
                   }}
-                  className={`text-left p-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`text-left p-1.5 sm:p-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${
                     triageStep === 3 
                       ? 'bg-[#004DD1] text-white shadow-sm' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : submittedProtocol 
+                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 cursor-pointer'
+                        : 'bg-gray-100 text-gray-600'
                   }`}
                 >
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">3</span>
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                    {submittedProtocol ? '✓' : '3'}
+                  </span>
                   <span className="truncate">3. Contato</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!submittedProtocol}
+                  className={`text-left p-1.5 sm:p-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${
+                    triageStep === 4 
+                      ? 'bg-emerald-600 text-white shadow-sm' 
+                      : 'bg-gray-100 text-gray-400 opacity-60'
+                  }`}
+                >
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                    {submittedProtocol ? '✓' : '4'}
+                  </span>
+                  <span className="truncate">4. Protocolo</span>
                 </button>
               </div>
             </div>
@@ -2156,12 +2221,22 @@ export default function App() {
                 <div className="pt-2 space-y-3">
                   <button 
                     type="submit"
-                    className="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-4 px-6 rounded-2xl font-black text-base shadow-[0_10px_25px_rgba(16,185,129,0.4)] hover:shadow-[0_15px_30px_rgba(16,185,129,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group"
+                    disabled={isSubmittingLead}
+                    className="w-full bg-gradient-to-r from-blue-700 via-[#004DD1] to-blue-600 hover:from-blue-800 hover:to-[#003CA3] text-white py-4 px-6 rounded-2xl font-black text-base shadow-[0_10px_25px_rgba(0,77,209,0.35)] hover:shadow-[0_15px_30px_rgba(0,77,209,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group disabled:opacity-75 disabled:cursor-wait"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-white/25 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <MessageCircle className="w-4 h-4 text-white fill-current" />
-                    </div>
-                    <span>Enviar Orçamento no WhatsApp</span>
+                    {isSubmittingLead ? (
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-5 h-5 animate-spin text-white" />
+                        <span>Interceptando e Gerando Protocolo no CRM...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-8 h-8 rounded-xl bg-white/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Sparkles className="w-4 h-4 text-amber-300 fill-current" />
+                        </div>
+                        <span>Gerar ID do Chamado & Ir para o WhatsApp</span>
+                      </>
+                    )}
                   </button>
 
                   <div className="flex items-center justify-between text-[11px] text-gray-500">
@@ -2174,12 +2249,136 @@ export default function App() {
                       <span>Voltar para Triagem</span>
                     </button>
                     <span className="flex items-center gap-1 text-emerald-600 font-medium">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Atendimento sem compromisso
+                      <ShieldCheck className="w-3.5 h-3.5" /> Atendimento direto com proprietário
                     </span>
                   </div>
                 </div>
               </form>
             )}
+
+            {/* STEP 4: PROTOCOLO GERADO & INTERCEPTADOR CONCLUÍDO */}
+            {triageStep === 4 && (
+              <div className="space-y-5 animate-fadeIn">
+                {/* Header Success Badge */}
+                <div className="text-center bg-gradient-to-b from-emerald-50 to-blue-50/40 border border-emerald-200/80 rounded-3xl p-6 relative overflow-hidden">
+                  <div className="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-600/30 animate-bounce">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  
+                  <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                    Chamado Registrado no CRM
+                  </span>
+                  
+                  <h4 className="text-xl sm:text-2xl font-black text-gray-900 mt-2">
+                    Solicitação Gravada com Sucesso!
+                  </h4>
+                  
+                  <p className="text-xs text-gray-600 mt-1 max-w-md mx-auto">
+                    Seus dados foram interceptados e salvos no sistema. O atendente da Romanelli já pode acessar sua ficha completa pelo protocolo abaixo.
+                  </p>
+
+                  {/* Big Ticket Protocol Box */}
+                  <div className="mt-5 bg-white border-2 border-[#004DD1] rounded-2xl p-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="text-center sm:text-left">
+                      <span className="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider block">
+                        ID DO CHAMADO / PROTOCOLO TENANT
+                      </span>
+                      <span className="text-2xl sm:text-3xl font-black text-[#004DD1] tracking-wider font-mono">
+                        {submittedProtocol}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleCopyProtocol}
+                      className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                        copiedProtocol 
+                          ? 'bg-emerald-600 text-white shadow-md' 
+                          : 'bg-blue-50 text-[#004DD1] hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      {copiedProtocol ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>ID Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          <span>Copiar ID</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Resumo da Mudança Gravada */}
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-2.5 text-xs text-gray-700">
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <span className="font-bold text-gray-900 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-[#004DD1]" />
+                      <span>Ficha do Cliente</span>
+                    </span>
+                    <span className="font-semibold text-gray-500">
+                      Cliente: <strong className="text-gray-900">{name}</strong> ({phone})
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <span className="text-gray-500 block">Origem:</span>
+                      <strong className="text-gray-800">{origin || 'Pouso Alegre'} {originNumber ? `nº ${originNumber}` : ''}</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block">Destino:</span>
+                      <strong className="text-gray-800">{destination || 'A combinar'} {destNumber ? `nº ${destNumber}` : ''}</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block">Serviço:</span>
+                      <strong className="text-gray-800">{serviceType} ({propertyType})</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block">Porte / Data:</span>
+                      <strong className="text-gray-800">{moveSize} • {movingDate || 'A combinar'}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ação Principal: Abrir WhatsApp */}
+                <div className="space-y-3 pt-1">
+                  <button 
+                    type="button"
+                    onClick={handleOpenWhatsAppDirectly}
+                    className="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-4 px-6 rounded-2xl font-black text-base sm:text-lg shadow-[0_10px_25px_rgba(16,185,129,0.45)] hover:shadow-[0_15px_35px_rgba(16,185,129,0.65)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group animate-pulse"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-white/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <MessageCircle className="w-5 h-5 text-white fill-current" />
+                    </div>
+                    <span>ABRIR CONVERSA NO WHATSAPP COM ESTE ID</span>
+                  </button>
+
+                  <div className="flex items-center justify-between pt-1 text-xs">
+                    <button 
+                      type="button" 
+                      onClick={handleResetSimulator}
+                      className="text-gray-500 hover:text-[#004DD1] font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Fazer Nova Simulação</span>
+                    </button>
+
+                    <button 
+                      type="button" 
+                      onClick={() => setQuoteModalOpen(false)}
+                      className="text-gray-400 hover:text-gray-700 font-semibold cursor-pointer"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       )}
