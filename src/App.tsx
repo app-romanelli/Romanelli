@@ -38,7 +38,8 @@ import {
   Search,
   HelpCircle,
   ChevronDown,
-  PhoneCall
+  PhoneCall,
+  Play
 } from 'lucide-react';
 
 const Logo = ({ light = false, className = "h-14 sm:h-16" }: { light?: boolean; className?: string }) => {
@@ -107,29 +108,58 @@ const ServiceCardItem = ({
       ref={cardRef}
       onClick={onSelect}
       style={{ transitionDelay: `${delayMs}ms` }}
-      className={`bg-white rounded-2xl p-8 shadow-[0_0_26px_rgba(0,0,0,0.08)] hover:shadow-[0_0_35px_rgba(0,77,209,0.18)] hover:-translate-y-1.5 transition-all duration-1000 ease-out flex flex-col items-center text-center border border-gray-100 group cursor-pointer relative overflow-hidden transform ${
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={`bg-white rounded-2xl p-7 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_36px_rgba(0,77,209,0.18)] hover:-translate-y-2 hover:border-blue-400 active:scale-[0.98] transition-all duration-300 ease-out flex flex-col items-center text-center border border-gray-200/80 group cursor-pointer relative overflow-hidden select-none transform ${
         isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
       }`}
     >
-      {/* Video badge */}
-      <div className="absolute top-4 right-4 bg-blue-50 text-[#004DD1] text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 group-hover:bg-[#004DD1] group-hover:text-white transition-colors shadow-sm">
-        <span>▶ Ver Vídeo</span>
+      {/* Light sheen reflection sweep animation on hover */}
+      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-blue-100/40 to-transparent pointer-events-none"></div>
+
+      {/* Video badge with animated live pulse indicator */}
+      <div className="absolute top-3.5 right-3.5 bg-blue-50 text-[#004DD1] text-[11px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-blue-200/80 shadow-xs group-hover:bg-[#004DD1] group-hover:text-white group-hover:border-transparent group-hover:shadow-md transition-all duration-300">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#004DD1] group-hover:bg-white"></span>
+        </span>
+        <Play className="w-3 h-3 fill-current" />
+        <span>Ver Vídeo</span>
       </div>
 
-      {/* Service Card */}
-      <div className="w-24 h-24 mb-6 flex items-center justify-center bg-blue-50 rounded-2xl group-hover:bg-[#004DD1] transition-colors duration-300">
+      {/* Service Icon with animated scale and play trigger indicator */}
+      <div className="w-24 h-24 mb-5 flex items-center justify-center bg-blue-50 rounded-2xl group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-600/30 transition-all duration-300 relative overflow-hidden">
         <img 
           src={srv.img} 
           alt={srv.title} 
           className="w-14 h-14 object-contain filter group-hover:brightness-0 group-hover:invert transition-all duration-300" 
         />
+        {/* Subtle hover play overlay icon */}
+        <div className="absolute inset-0 bg-[#004DD1]/90 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="w-10 h-10 rounded-full bg-white text-[#004DD1] flex items-center justify-center shadow-md transform group-hover:scale-110 transition-transform">
+            <Play className="w-5 h-5 fill-current ml-0.5" />
+          </div>
+        </div>
       </div>
-      <h3 className="text-xl font-extrabold text-[#3A3A3A] mb-3 group-hover:text-[#004DD1] transition-colors">
+
+      <h3 className="text-xl font-extrabold text-[#3A3A3A] mb-2.5 group-hover:text-[#004DD1] transition-colors">
         {srv.title}
       </h3>
-      <p className="text-gray-600 text-sm leading-relaxed font-normal">
+      <p className="text-gray-600 text-sm leading-relaxed font-normal mb-2 flex-grow">
         {srv.desc}
       </p>
+
+      {/* Interactive Bottom Prompt with animated arrow */}
+      <div className="mt-4 pt-3.5 w-full border-t border-gray-100 flex items-center justify-center gap-1.5 text-xs font-bold text-[#004DD1] group-hover:text-blue-700 transition-colors">
+        <span>Clique para assistir ao vídeo</span>
+        <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1.5 transition-transform" />
+      </div>
     </div>
   );
 };
