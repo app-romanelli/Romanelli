@@ -396,11 +396,7 @@ export default function App() {
   const [faqCategory, setFaqCategory] = useState<string>('todos');
   const [faqSearch, setFaqSearch] = useState<string>('');
 
-  // Reviews sort/filter state
-  const [reviewSort, setReviewSort] = useState<'recent' | 'oldest'>('recent');
-  const [isSyncingReviews, setIsSyncingReviews] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<string | null>(null);
-  const [reviewsList, setReviewsList] = useState([
+  const [reviewsList] = useState([
     {
       name: 'Reh Garcia',
       date: '16 Março 2024',
@@ -437,27 +433,6 @@ export default function App() {
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80'
     }
   ]);
-
-  const handleSyncGoogleReviews = () => {
-    setIsSyncingReviews(true);
-    setSyncStatus('Conectando ao Google Places API...');
-    setTimeout(() => {
-      const freshReview = {
-        name: 'Carlos Eduardo (Google Verificado)',
-        date: 'Hoje (Atualizado ao vivo)',
-        timestamp: Date.now(),
-        text: 'Mudança residencial impecável em Pouso Alegre. Cuidado redobrado com os eletrodomésticos e móveis planejados. Parabéns à equipe!',
-        avatar: 'https://lh3.googleusercontent.com/a/ACg8ocJ...=w40-h40-c-rp-mo-br100'
-      };
-      setReviewsList(prev => {
-        if (prev.some(r => r.name.includes('Carlos Eduardo'))) return prev;
-        return [freshReview, ...prev];
-      });
-      setIsSyncingReviews(false);
-      setSyncStatus('✓ 231 avaliações atualizadas direto do Google!');
-      setTimeout(() => setSyncStatus(null), 4000);
-    }, 1000);
-  };
 
   // Reviews auto-scroll ref
   const reviewsScrollRef = React.useRef<HTMLDivElement>(null);
@@ -1078,36 +1053,10 @@ export default function App() {
       {/* O Que Nossos Clientes Dizem (Google Reviews com Filtro por Data) */}
       <section id="clientes" className="py-12 bg-[#F2F2F2] overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 flex flex-col items-center">
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <h2 className="text-3xl sm:text-4xl font-black text-[#004DD1] uppercase tracking-tight">O Que Nossos Clientes Dizem</h2>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setReviewSort(prev => prev === 'recent' ? 'oldest' : 'recent')}
-                  className="bg-white hover:bg-blue-50 text-[#004DD1] border border-blue-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
-                  title="Filtrar por data"
-                >
-                  <Calendar className="w-3.5 h-3.5 text-[#004DD1]" />
-                  <span>{reviewSort === 'recent' ? 'Mais Recentes' : 'Mais Antigas'}</span>
-                </button>
-                <button 
-                  onClick={handleSyncGoogleReviews}
-                  disabled={isSyncingReviews}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm disabled:opacity-50"
-                  title="Sincronizar avaliações ao vivo do Google"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingReviews ? 'animate-spin' : ''}`} />
-                  <span>{isSyncingReviews ? 'Sincronizando...' : 'Sincronizar Google'}</span>
-                </button>
-              </div>
-            </div>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#004DD1] uppercase tracking-tight">O Que Nossos Clientes Dizem</h2>
             <div className="w-24 h-2 bg-[#004DD1] mx-auto mt-3 rounded-full"></div>
             <p className="text-gray-600 mt-2 font-medium">Avaliações reais de clientes satisfeitos com nossos serviços no Google.</p>
-            {syncStatus && (
-              <div className="mt-3 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-1.5 rounded-lg text-xs font-bold animate-pulse">
-                {syncStatus}
-              </div>
-            )}
           </div>
 
           <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl p-6 sm:p-8 overflow-hidden">
@@ -1145,14 +1094,7 @@ export default function App() {
                 <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
 
                 <div className="animate-marquee flex gap-6">
-                  {([
-                    ...reviewsList
-                  ]
-                  .sort((a, b) => reviewSort === 'recent' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp)
-                  .concat([
-                    ...reviewsList
-                  ].sort((a, b) => reviewSort === 'recent' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp)))
-                  .map((rev, idx) => (
+                  {[...reviewsList, ...reviewsList].map((rev, idx) => (
                     <div key={idx} className="w-[280px] sm:w-[300px] flex-shrink-0 bg-[#F9FBFD] border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-3">
