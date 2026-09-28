@@ -44,7 +44,7 @@ import {
   FileText,
   Sparkles
 } from 'lucide-react';
-import { salvarNovoLead, gerarProtocoloChamado } from './lib/api-landing';
+import { enviarOrcamentoParaCRM, salvarNovoLead, gerarProtocoloChamado } from './lib/api-landing';
 
 const Logo = ({ light = false, className = "h-14 sm:h-16" }: { light?: boolean; className?: string }) => {
   const [imgError, setImgError] = useState(false);

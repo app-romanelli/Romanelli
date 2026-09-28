@@ -18,6 +18,7 @@ export interface NovoLeadPayload {
   servico_tipo?: string;
   origem_endereco?: string;
   origem_numero?: string;
+  origem_bairro?: string;
   origem_cep?: string;
   origem_cidade?: string;
   origem_uf?: string;
@@ -26,6 +27,7 @@ export interface NovoLeadPayload {
   origem_andar?: number;
   destino_endereco?: string;
   destino_numero?: string;
+  destino_bairro?: string;
   destino_cep?: string;
   destino_cidade?: string;
   destino_uf?: string;
@@ -43,7 +45,8 @@ export interface NovoLeadPayload {
 
 export interface ResultadoOperacao {
   sucesso: boolean;
-  mensagem: string;
+  mensagem?: string;
+  erro?: any;
   id?: string;
   protocolo?: string;
   dados?: any;
@@ -56,6 +59,14 @@ export const WEBHOOK_URL_PAINEL =
   import.meta.env.VITE_WEBHOOK_URL || 
   'https://ais-dev-7bgvptte2p4vfmxfmseqts-873734549704.us-east1.run.app/api/webhook/romanelli-hook-5hg9oiad';
 
+export const SUPABASE_URL = 
+  import.meta.env.VITE_SUPABASE_URL || 
+  'https://aucbnksrhgzpsvpdcvji.supabase.co';
+
+export const SUPABASE_ANON_KEY = 
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Y2Jua3NyaGd6cHN2cGRjdmppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzAzMTAsImV4cCI6MjEwNjEwNjMxMH0.ysMEfpERwshllLvbAsVqe11M5vbIHloo5pncEGY9-jU';
+
 /**
  * Gera um protocolo único no padrão ROM-XXXXXX
  */
@@ -65,47 +76,49 @@ export function gerarProtocoloChamado(): string {
 }
 
 /**
- * Intercepta e salva o lead disparando diretamente para o Webhook do Painel de Gestão + Supabase
+ * Envia orçamento para o CRM (Supabase + Webhook do Painel + Backup Local)
  */
-export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoOperacao> {
-  const cleanPhone = (dados.whatsapp || '').replace(/\D/g, '');
-  const protocoloGerado = dados.protocolo || dados.id_chamado || gerarProtocoloChamado();
-  const idTenant = dados.id_tenant || 'romanelli-pouso-alegre';
+export async function enviarOrcamentoParaCRM(dadosFormulario: NovoLeadPayload): Promise<ResultadoOperacao> {
+  const cleanPhone = (dadosFormulario.whatsapp || '').replace(/\D/g, '');
+  const protocoloGerado = dadosFormulario.protocolo || dadosFormulario.id_chamado || gerarProtocoloChamado();
+  const idTenant = dadosFormulario.id_tenant || 'romanelli-pouso-alegre';
 
   const payload = {
     protocolo: protocoloGerado,
     id_chamado: protocoloGerado,
     id_tenant: idTenant,
     tenant_id: idTenant,
-    nome: dados.nome.trim(),
+    nome: dadosFormulario.nome.trim(),
     whatsapp: cleanPhone,
     telefone: cleanPhone,
-    email: dados.email?.trim() || null,
-    servico_tipo: dados.servico_tipo || 'Residencial',
-    tipo_servico: dados.servico_tipo || 'Residencial',
-    origem_endereco: dados.origem_endereco || null,
-    origem_numero: dados.origem_numero || null,
-    origem_cep: dados.origem_cep || null,
-    origem_cidade: dados.origem_cidade || 'Pouso Alegre',
-    origem_uf: dados.origem_uf || 'MG',
-    origem_tipo_imovel: dados.origem_tipo_imovel || 'casa',
-    origem_tem_elevador: dados.origem_tem_elevador ?? false,
-    origem_andar: dados.origem_andar ?? 0,
-    destino_endereco: dados.destino_endereco || null,
-    destino_numero: dados.destino_numero || null,
-    destino_cep: dados.destino_cep || null,
-    destino_cidade: dados.destino_cidade || null,
-    destino_uf: dados.destino_uf || 'MG',
-    destino_tipo_imovel: dados.destino_tipo_imovel || 'casa',
-    destino_tem_elevador: dados.destino_tem_elevador ?? false,
-    destino_andar: dados.destino_andar ?? 0,
-    data_prevista: dados.data_prevista || null,
-    precisa_embalagem: dados.precisa_embalagem ?? false,
-    precisa_desmontagem: dados.precisa_desmontagem ?? false,
-    observacoes: dados.observacoes || null,
-    valor_estimado: dados.valor_estimado || 0,
-    status: dados.status || 'novo',
-    responsavel_atendimento: dados.responsavel_atendimento || 'Davi Romanelli',
+    email: dadosFormulario.email || '',
+    servico_tipo: dadosFormulario.servico_tipo || 'Residencial',
+    tipo_servico: dadosFormulario.servico_tipo || 'Residencial',
+    origem_endereco: dadosFormulario.origem_endereco || '',
+    origem_cep: dadosFormulario.origem_cep || '',
+    origem_numero: dadosFormulario.origem_numero || 'S/N',
+    origem_bairro: dadosFormulario.origem_bairro || '',
+    origem_cidade: dadosFormulario.origem_cidade || 'Pouso Alegre',
+    origem_uf: dadosFormulario.origem_uf || 'MG',
+    origem_tipo_imovel: dadosFormulario.origem_tipo_imovel || 'casa',
+    origem_tem_elevador: Boolean(dadosFormulario.origem_tem_elevador),
+    origem_andar: Number(dadosFormulario.origem_andar || 0),
+    destino_endereco: dadosFormulario.destino_endereco || '',
+    destino_cep: dadosFormulario.destino_cep || '',
+    destino_numero: dadosFormulario.destino_numero || 'S/N',
+    destino_bairro: dadosFormulario.destino_bairro || '',
+    destino_cidade: dadosFormulario.destino_cidade || 'Pouso Alegre',
+    destino_uf: dadosFormulario.destino_uf || 'MG',
+    destino_tipo_imovel: dadosFormulario.destino_tipo_imovel || 'casa',
+    destino_tem_elevador: Boolean(dadosFormulario.destino_tem_elevador),
+    destino_andar: Number(dadosFormulario.destino_andar || 0),
+    data_prevista: dadosFormulario.data_prevista || new Date().toISOString().split('T')[0],
+    precisa_embalagem: Boolean(dadosFormulario.precisa_embalagem),
+    precisa_desmontagem: Boolean(dadosFormulario.precisa_desmontagem),
+    observacoes: dadosFormulario.observacoes || '',
+    valor_estimado: Number(dadosFormulario.valor_estimado || 0),
+    status: dadosFormulario.status || 'novo',
+    responsavel_atendimento: dadosFormulario.responsavel_atendimento || 'Atendimento Geral',
     origem_lead: 'Landing Page Simulador',
     created_at: new Date().toISOString()
   };
@@ -120,62 +133,68 @@ export async function salvarNovoLead(dados: NovoLeadPayload): Promise<ResultadoO
     console.warn('[Romanelli CRM] Falha ao gravar backup local:', err);
   }
 
-  // 2. Disparo Direto para o Webhook do Painel de Gestão (Hook Principal)
-  let webhookSucesso = false;
+  // 2. Disparo para o Webhook do Painel de Gestão
   if (WEBHOOK_URL_PAINEL) {
     try {
-      console.log('[Romanelli CRM] Enviando lead para o Webhook do Painel:', WEBHOOK_URL_PAINEL);
-      const resHook = await fetch(WEBHOOK_URL_PAINEL, {
+      fetch(WEBHOOK_URL_PAINEL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         body: JSON.stringify(payload)
-      });
-
-      if (resHook.ok) {
-        console.log('[Romanelli CRM] Webhook acionado com sucesso!');
-        webhookSucesso = true;
-      } else {
-        const errText = await resHook.text();
-        console.warn('[Romanelli CRM] Webhook respondeu status:', resHook.status, errText);
-      }
-    } catch (hookErr) {
-      console.warn('[Romanelli CRM] Falha ao disparar webhook:', hookErr);
+      }).catch(e => console.warn('[Romanelli Webhook Async]:', e));
+    } catch (e) {
+      console.warn('[Romanelli Webhook]:', e);
     }
   }
 
-  // 3. Gravação em Paralelo no Supabase (se configurado)
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://aucbnksrhgzpsvpdcvji.supabase.co';
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Y2Jua3NyaGd6cHN2cGRjdmppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzAzMTAsImV4cCI6MjEwNjEwNjMxMH0.ysMEfpERwshllLvbAsVqe11M5vbIHloo5pncEGY9-jU';
+  // 3. Envio direto para o Supabase
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orcamentos_leads`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(payload)
+    });
 
-  if (supabaseUrl && supabaseAnonKey) {
-    try {
-      await fetch(`${supabaseUrl}/rest/v1/orcamentos_leads`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(payload)
-      });
-    } catch (sbErr) {
-      console.warn('[Romanelli CRM] Supabase fallback warning:', sbErr);
+    if (response.ok) {
+      const resultado = await response.json();
+      console.log('Lead salvo com sucesso no Supabase!', resultado);
+      return { 
+        sucesso: true, 
+        mensagem: 'Lead salvo com sucesso no Supabase!', 
+        protocolo: protocoloGerado, 
+        id: protocoloGerado,
+        dados: resultado 
+      };
+    } else {
+      const erro = await response.text();
+      console.error('Erro do Supabase:', erro);
+      return { 
+        sucesso: true, // Gravado no backup local e disparado para o webhook
+        mensagem: 'Registrado com sucesso!', 
+        protocolo: protocoloGerado, 
+        id: protocoloGerado,
+        erro 
+      };
     }
+  } catch (erro) {
+    console.error('Erro de conexão:', erro);
+    return { 
+      sucesso: true, 
+      mensagem: 'Salvo em contingência local.', 
+      protocolo: protocoloGerado, 
+      id: protocoloGerado,
+      erro 
+    };
   }
-
-  return {
-    sucesso: true,
-    mensagem: webhookSucesso 
-      ? 'Chamado enviado com sucesso ao Painel de Gestão!' 
-      : 'Chamado registrado com sucesso!',
-    protocolo: protocoloGerado,
-    id: protocoloGerado
-  };
 }
 
-// Alias para compatibilidade
-export const submeterLeadRest = salvarNovoLead;
+// Aliases para compatibilidade total
+export const salvarNovoLead = enviarOrcamentoParaCRM;
+export const submeterLeadRest = enviarOrcamentoParaCRM;
