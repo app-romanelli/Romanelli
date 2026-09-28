@@ -44,7 +44,7 @@ import {
   FileText,
   Sparkles
 } from 'lucide-react';
-import { enviarOrcamentoParaCRM, salvarNovoLead, gerarProtocoloChamado } from './lib/api-landing';
+import { enviarOrcamentoParaSupabase, gerarProtocoloChamado } from './lib/api-landing';
 
 const Logo = ({ light = false, className = "h-14 sm:h-16" }: { light?: boolean; className?: string }) => {
   const [imgError, setImgError] = useState(false);
@@ -547,9 +547,9 @@ export default function App() {
     const protocolo = gerarProtocoloChamado();
     const extrasText = extraServices.length > 0 ? extraServices.join(', ') : 'Apenas transporte';
 
-    // Interceptador: Registra no Supabase/CRM e contingência local com o ID do chamado / protocolo
+    // Interceptador: Registra diretamente no Supabase com o ID do chamado / protocolo
     try {
-      await salvarNovoLead({
+      await enviarOrcamentoParaSupabase({
         protocolo: protocolo,
         id_chamado: protocolo,
         id_tenant: 'romanelli-pouso-alegre',
@@ -576,7 +576,7 @@ export default function App() {
         responsavel_atendimento: 'Davi Romanelli'
       });
     } catch (e) {
-      console.warn('[Romanelli CRM Interceptador]:', e);
+      console.warn('[Romanelli Supabase Interceptador]:', e);
     } finally {
       setIsSubmittingLead(false);
       setSubmittedProtocol(protocolo);
