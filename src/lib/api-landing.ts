@@ -8,6 +8,7 @@ export interface NovoLeadPayload {
   protocolo?: string;
   id_chamado?: string;
   id_tenant?: string;
+  token?: string;
 
   // Dados do Cliente
   nome: string;
@@ -53,6 +54,11 @@ export interface ResultadoOperacao {
 }
 
 /**
+ * Token Oficial do Hook do Painel Romanelli
+ */
+export const WEBHOOK_TOKEN = 'romanelli-hook-5hg9oiad';
+
+/**
  * URL Oficial do Webhook do Painel de Gestão Romanelli
  */
 export const WEBHOOK_URL_PAINEL = 
@@ -76,14 +82,16 @@ export function gerarProtocoloChamado(): string {
 }
 
 /**
- * Envia orçamento para o CRM (Supabase + Webhook do Painel + Backup Local)
+ * Envia orçamento para o CRM (Webhook com Token + Supabase + Backup Local)
  */
 export async function enviarOrcamentoParaCRM(dadosFormulario: NovoLeadPayload): Promise<ResultadoOperacao> {
   const cleanPhone = (dadosFormulario.whatsapp || '').replace(/\D/g, '');
   const protocoloGerado = dadosFormulario.protocolo || dadosFormulario.id_chamado || gerarProtocoloChamado();
-  const idTenant = dadosFormulario.id_tenant || 'romanelli-pouso-alegre';
+  const idTenant = dadosFormulario.id_tenant || WEBHOOK_TOKEN;
 
   const payload = {
+    token: WEBHOOK_TOKEN,
+    webhook_token: WEBHOOK_TOKEN,
     protocolo: protocoloGerado,
     id_chamado: protocoloGerado,
     id_tenant: idTenant,
@@ -133,17 +141,23 @@ export async function enviarOrcamentoParaCRM(dadosFormulario: NovoLeadPayload): 
     console.warn('[Romanelli CRM] Falha ao gravar backup local:', err);
   }
 
-  // 2. Disparo para o Webhook do Painel de Gestão
+  // 2. Disparo para o Webhook do Painel de Gestão (com Token nos Headers e Body)
   if (WEBHOOK_URL_PAINEL) {
     try {
+      console.log('[Romanelli CRM] Disparando Webhook com Token:', WEBHOOK_TOKEN);
       fetch(WEBHOOK_URL_PAINEL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${WEBHOOK_TOKEN}`,
+          'x-webhook-token': WEBHOOK_TOKEN,
+          'x-tenant-id': WEBHOOK_TOKEN
         },
         body: JSON.stringify(payload)
-      }).catch(e => console.warn('[Romanelli Webhook Async]:', e));
+      })
+      .then(res => console.log('[Romanelli Webhook Resposta]:', res.status))
+      .catch(e => console.warn('[Romanelli Webhook Async]:', e));
     } catch (e) {
       console.warn('[Romanelli Webhook]:', e);
     }
@@ -167,7 +181,7 @@ export async function enviarOrcamentoParaCRM(dadosFormulario: NovoLeadPayload): 
       console.log('Lead salvo com sucesso no Supabase!', resultado);
       return { 
         sucesso: true, 
-        mensagem: 'Lead salvo com sucesso no Supabase!', 
+        mensagem: 'Lead salvo com sucesso no Supabase e Webhook acionado!', 
         protocolo: protocoloGerado, 
         id: protocoloGerado,
         dados: resultado 
