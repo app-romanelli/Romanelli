@@ -67,12 +67,27 @@ const Logo = ({ light = false, className = "h-14 sm:h-16" }: { light?: boolean; 
     <img 
       src="https://romanellimudancas.com/wp-content/uploads/2024/05/7ca820f174872ea9a3-e1715322021482.png" 
       alt="Romanelli Mudanças e Pinturas" 
-      className={`w-auto object-contain ${className} ${light ? 'brightness-0 invert' : ''}`}
+      className={`w-auto object-contain shrink-0 max-h-full ${className} ${light ? 'brightness-0 invert' : ''}`}
       referrerPolicy="no-referrer"
       onError={() => setImgError(true)}
     />
   );
 };
+
+const WhatsAppIcon = ({ className = "w-5 h-5 fill-white" }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+  </svg>
+);
 
 const ServiceCardItem = ({ 
   srv, 
@@ -126,16 +141,6 @@ const ServiceCardItem = ({
     >
       {/* Light sheen reflection sweep animation on hover */}
       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-blue-100/40 to-transparent pointer-events-none"></div>
-
-      {/* Video badge with animated live pulse indicator */}
-      <div className="absolute top-3.5 right-3.5 bg-blue-50 text-[#004DD1] text-[11px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-blue-200/80 shadow-xs group-hover:bg-[#004DD1] group-hover:text-white group-hover:border-transparent group-hover:shadow-md transition-all duration-300">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#004DD1] group-hover:bg-white"></span>
-        </span>
-        <Play className="w-3 h-3 fill-current" />
-        <span>Ver Vídeo</span>
-      </div>
 
       {/* Service Icon with animated scale and play trigger indicator */}
       <div className="w-24 h-24 mb-5 flex items-center justify-center bg-blue-50 rounded-2xl group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-600/30 transition-all duration-300 relative overflow-hidden">
@@ -677,7 +682,7 @@ export default function App() {
       <div className="bg-[#003CA3] text-white py-2 px-4 text-xs md:text-sm font-medium">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-6">
-            <a href="tel:5535991175646" className="flex items-center gap-1.5 hover:underline">
+            <a href="tel:+5535991175646" className="flex items-center gap-1.5 hover:underline">
               <Phone className="w-3.5 h-3.5 text-blue-300" />
               <span>+55 (35) 99117-5646</span>
             </a>
@@ -717,12 +722,12 @@ export default function App() {
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 bg-[#004DD1] shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 sm:h-28 flex items-center justify-between">
-          <a href="#inicio" className="flex items-center gap-3 group py-2">
-            <Logo light={true} className="h-16 sm:h-20 md:h-22" />
+          <a href="#inicio" className="flex items-center gap-3 group py-2 shrink-0">
+            <Logo light={true} className="h-12 sm:h-14 md:h-16" />
           </a>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8 font-bold text-base sm:text-lg text-white">
+          <nav className="hidden lg:flex items-center gap-7 font-bold text-base sm:text-lg text-white">
             <a href="#inicio" className="hover:text-blue-200 transition-colors">Início</a>
             <a href="#quemsomos" className="hover:text-blue-200 transition-colors">Quem Somos</a>
             <a href="#servicos" className="hover:text-blue-200 transition-colors">Serviços</a>
@@ -843,34 +848,34 @@ export default function App() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+            <div className="lg:col-span-12 max-w-4xl mx-auto space-y-6 text-center">
               <div className="inline-flex items-center gap-2 bg-blue-600/40 border border-blue-400/30 px-4 py-1.5 rounded-full text-sm font-semibold backdrop-blur-md">
                 <ShieldCheck className="w-4 h-4 text-blue-300" />
-                <span>Segurança e Agilidade em Minas Gerais</span>
+                <span>Segurança e Agilidade em todo o Sul de Minas</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-snug sm:leading-tight uppercase">
-                <span>SUA MUDANÇA</span> <br/>
-                <span>NOSSA</span> <br/>
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-snug sm:leading-tight uppercase">
+                <span>SUA MUDANÇA,</span> <br/>
                 <span className="text-blue-400 inline-block min-h-[1.25em]">
-                  {typedText}
+                  NOSSA {typedText}
                   <span className="inline-block ml-1 font-light text-white animate-pulse">|</span>
                 </span>
               </h1>
-              <p className="text-lg sm:text-2xl font-normal text-gray-200 max-w-2xl mx-auto lg:mx-0">
-                Fazer uma mudança nunca foi tão fácil. Conte com uma equipe experiente e veículos preparados para cuidar de cada detalhe.
+              <p className="text-base sm:text-xl md:text-2xl font-medium text-gray-100 max-w-2xl mx-auto leading-relaxed">
+                Segurança, pontualidade e cuidado total com o seu patrimônio do primeiro ao último item.
               </p>
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button 
                   onClick={() => openTriageModal()}
-                  className="w-full sm:w-auto bg-white/20 hover:bg-white/30 border-2 border-white/50 text-white px-8 py-4 rounded-2xl font-black text-base backdrop-blur-md shadow-xl hover:scale-105 transition-all text-center flex items-center justify-center gap-3 group cursor-pointer"
+                  className="w-full sm:w-auto bg-[#004DD1] hover:bg-blue-700 text-white px-9 py-4 rounded-2xl font-black text-lg shadow-2xl shadow-blue-600/50 hover:scale-105 active:scale-95 transition-all text-center flex items-center justify-center gap-3 group cursor-pointer border border-blue-400/40"
                 >
-                  <Calculator className="w-5 h-5 text-blue-300 group-hover:rotate-12 transition-transform" />
-                  <span>Simulador Rápido de Mudança</span>
+                  <Calculator className="w-6 h-6 text-blue-200 group-hover:rotate-12 transition-transform" />
+                  <span>Faça seu Orçamento</span>
+                  <ArrowRight className="w-5 h-5 text-blue-200 group-hover:translate-x-1.5 transition-transform" />
                 </button>
               </div>
 
               {/* Trust Badges */}
-              <div className="pt-8 grid grid-cols-3 gap-4 border-t border-white/10 text-center lg:text-left">
+              <div className="pt-8 grid grid-cols-3 gap-4 border-t border-white/10 text-center max-w-2xl mx-auto">
                 <div>
                   <div className="text-2xl sm:text-3xl font-extrabold text-blue-300">+10 Anos</div>
                   <div className="text-xs text-gray-300">de Experiência</div>
@@ -881,129 +886,7 @@ export default function App() {
                 </div>
                 <div>
                   <div className="text-2xl sm:text-3xl font-extrabold text-blue-300">Pouso Alegre</div>
-                  <div className="text-xs text-gray-300">& Toda Região</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Simulator Widget on Hero (Desktop) */}
-            <div className="lg:col-span-5 hidden lg:block">
-              <div className="bg-white/95 backdrop-blur-md p-7 rounded-3xl shadow-2xl text-gray-800 border border-white/40 relative">
-                {/* Header */}
-                <div className="mb-5">
-                  <div className="inline-flex items-center gap-1.5 bg-blue-50 text-[#004DD1] text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-                    <Zap className="w-3.5 h-3.5 fill-[#004DD1]" />
-                    <span>Cotação Rápida em 1 Minuto</span>
-                  </div>
-                  <h3 className="text-2xl font-black text-[#004DD1] tracking-tight">Simule sua Mudança</h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Escolha o serviço e itinerário para atendimento prioritário
-                  </p>
-                </div>
-
-                <div className="space-y-3.5">
-                  {/* Tipo de Serviço */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                      Tipo de Serviço
-                    </label>
-                    <select 
-                      value={serviceType} 
-                      onChange={(e) => setServiceType(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-[#004DD1] focus:bg-white focus:outline-none transition-all"
-                    >
-                      <option value="Residencial">🚚 Mudança Residencial</option>
-                      <option value="Comercial">🏢 Mudança Comercial</option>
-                      <option value="Industrial">🏭 Mudança Industrial</option>
-                      <option value="Entrega Rápida">⚡ Entrega Rápida</option>
-                      <option value="Feiras e Eventos">🎪 Transporte para Eventos</option>
-                      <option value="Pintura Interna">🎨 Pintura Interna / Predial</option>
-                    </select>
-                  </div>
-
-                  {/* Origem */}
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-[11px] font-bold text-gray-600 uppercase">
-                        De onde? (Origem)
-                      </label>
-                      {originLoading && <span className="text-[10px] text-blue-600 animate-pulse font-bold">Buscando CEP...</span>}
-                    </div>
-                    <div className="relative">
-                      <MapPin className="w-4 h-4 text-[#004DD1] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <input 
-                        type="text" 
-                        value={origin}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setOrigin(val);
-                          // Auto trigger ViaCep if typing 8-digit CEP
-                          const digits = val.replace(/\D/g, '');
-                          if (digits.length === 8 && val.length <= 9) {
-                            handleCepChange(val, 'origin');
-                          }
-                        }}
-                        placeholder="Ex: Pouso Alegre - MG ou CEP" 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-[#004DD1] focus:bg-white focus:outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Destino */}
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-[11px] font-bold text-gray-600 uppercase">
-                        Para onde? (Destino)
-                      </label>
-                      {destLoading && <span className="text-[10px] text-blue-600 animate-pulse font-bold">Buscando CEP...</span>}
-                    </div>
-                    <div className="relative">
-                      <MapPin className="w-4 h-4 text-emerald-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <input 
-                        type="text" 
-                        value={destination}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setDestination(val);
-                          // Auto trigger ViaCep if typing 8-digit CEP
-                          const digits = val.replace(/\D/g, '');
-                          if (digits.length === 8 && val.length <= 9) {
-                            handleCepChange(val, 'dest');
-                          }
-                        }}
-                        placeholder="Ex: Belo Horizonte, SP ou CEP" 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-[#004DD1] focus:bg-white focus:outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* CTA Button */}
-                  <div className="pt-2">
-                    <button 
-                      type="button"
-                      onClick={handleHeroSimulatorSubmit}
-                      className="w-full bg-[#004DD1] hover:bg-[#003CA3] text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group cursor-pointer"
-                    >
-                      <span>Avançar e Simular Orçamento</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Trust guarantee micro badges */}
-                <div className="mt-4 pt-3.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500 font-medium">
-                  <span className="flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                    100% Gratuito
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-blue-500" />
-                    Resposta Rápida
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                    5.0 no Google
-                  </span>
+                  <div className="text-xs text-gray-300">& Todo o Sul de Minas</div>
                 </div>
               </div>
             </div>
@@ -1013,41 +896,59 @@ export default function App() {
       </section>
 
       {/* Quem Somos */}
-      <section id="quemsomos" className="py-20 bg-[#F2F2F2]">
+      <section id="quemsomos" className="py-12 sm:py-16 bg-[#F4F6F9]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-black text-[#004DD1] uppercase tracking-tight">Quem Somos</h2>
-            <div className="w-24 h-2 bg-[#004DD1] mx-auto mt-4 rounded-full"></div>
+          <div className="text-center mb-8 sm:mb-10">
+            <span className="inline-block bg-blue-100/80 text-[#004DD1] text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-wider mb-2">
+              Tradição & Confiança
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#004DD1] uppercase tracking-tight">Quem Somos</h2>
+            <div className="w-16 h-1 bg-[#004DD1] mx-auto mt-2.5 rounded-full"></div>
           </div>
 
-          <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden p-8 sm:p-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6 text-center md:text-left">
-                <h3 className="text-2xl font-bold text-gray-900">Excelência em Mudanças e Serviços em Minas Gerais</h3>
-                <p className="text-gray-600 leading-relaxed font-medium">
-                  A Romanelli Mudanças e Pinturas é a melhor solução para suas mudanças em Minas Gerais. Com anos de experiência e colecionando bons resultados para os clientes com serviços de alta qualidade.
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-gray-100/80 overflow-hidden p-6 sm:p-8 lg:p-9 hover:shadow-xl transition-shadow duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center">
+              
+              {/* Coluna Texto */}
+              <div className="md:col-span-7 space-y-3.5 sm:space-y-4 text-center md:text-left">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 leading-tight">
+                  Excelência em Mudanças e Serviços em Minas Gerais
+                </h3>
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-normal">
+                  A <strong>Romanelli Mudanças e Pinturas</strong> é a melhor solução para suas mudanças em Minas Gerais. Com anos de experiência e colecionando resultados de excelência para os clientes com serviços de alta qualidade e cuidado extremo.
                 </p>
-                <p className="text-gray-600 leading-relaxed font-medium">
-                  Você pode contar com a Romanelli Mudanças para realizar suas mudanças com agilidade e segurança. <strong className="text-[#004DD1]">Fazer uma mudança nunca foi tão fácil!</strong>
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-normal">
+                  Você pode contar com a nossa equipe para realizar suas mudanças com máxima agilidade e segurança. <strong className="text-[#004DD1] font-bold">Fazer uma mudança nunca foi tão fácil!</strong>
                 </p>
-                <div className="pt-2 flex flex-wrap justify-center md:justify-start gap-4">
-                  <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl text-[#004DD1] font-semibold text-sm">
-                    <CheckCircle2 className="w-5 h-5 text-[#004DD1]" />
+                
+                {/* Badges */}
+                <div className="pt-2 flex flex-wrap justify-center md:justify-start gap-2.5">
+                  <div className="flex items-center gap-1.5 bg-blue-50/80 border border-blue-100 text-[#004DD1] px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs">
+                    <CheckCircle2 className="w-4 h-4 text-[#004DD1] shrink-0" />
                     <span>Frota Equipada</span>
                   </div>
-                  <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl text-[#004DD1] font-semibold text-sm">
-                    <CheckCircle2 className="w-5 h-5 text-[#004DD1]" />
+                  <div className="flex items-center gap-1.5 bg-blue-50/80 border border-blue-100 text-[#004DD1] px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs">
+                    <CheckCircle2 className="w-4 h-4 text-[#004DD1] shrink-0" />
                     <span>Equipe Qualificada</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>100% Protegido</span>
                   </div>
                 </div>
               </div>
-              <div className="flex justify-center">
-                <img 
-                  src="https://romanellimudancas.com/wp-content/uploads/2024/05/7ca820f174872b859cea9a3-e1715313929914.png" 
-                  alt="Caminhão Romanelli Mudanças" 
-                  className="w-full max-w-md object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500"
-                />
+
+              {/* Coluna Imagem / Logo Truck */}
+              <div className="md:col-span-5 flex justify-center items-center">
+                <div className="w-full max-w-[260px] sm:max-w-[290px] bg-gradient-to-br from-blue-50/60 to-slate-50 p-5 sm:p-6 rounded-2xl border border-blue-100/60 flex items-center justify-center shadow-inner group">
+                  <img 
+                    src="https://romanellimudancas.com/wp-content/uploads/2024/05/7ca820f174872b859cea9a3-e1715313929914.png" 
+                    alt="Caminhão Romanelli Mudanças" 
+                    className="w-full h-auto max-h-44 sm:max-h-48 object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -1329,7 +1230,7 @@ export default function App() {
                   rel="noopener noreferrer"
                   className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-600/30"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <WhatsAppIcon className="w-4 h-4 fill-white" />
                   <span>Perguntar no WhatsApp</span>
                 </a>
               </div>
@@ -1397,7 +1298,7 @@ export default function App() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors"
                           >
-                            <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            <WhatsAppIcon className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
                             <span>Conversar com atendente no WhatsApp</span>
                           </a>
                         </div>
@@ -1426,22 +1327,23 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              <div className="flex flex-col items-center sm:items-end gap-2.5 w-full sm:w-auto">
                 <a
                   href="https://api.whatsapp.com/send?phone=5535991175646&text=Olá,%20estava%20olhando%20as%20dúvidas%20frequentes%20no%20site%20e%20gostaria%20de%20um%20atendimento!"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto bg-[#25D366] hover:bg-[#1EBE5D] text-white px-6 py-3.5 rounded-xl font-black text-sm shadow-lg shadow-emerald-950/20 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full sm:w-auto bg-[#25D366] hover:bg-[#1EBE5D] text-white px-7 py-3.5 rounded-2xl font-black text-sm shadow-xl shadow-emerald-950/30 hover:scale-105 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
                 >
-                  <MessageCircle className="w-4 h-4 fill-white" />
-                  <span>Chamar no WhatsApp</span>
+                  <WhatsAppIcon className="w-5 h-5 fill-white" />
+                  <span>Falar com Atendente no WhatsApp</span>
                 </a>
                 <a
-                  href="tel:5535991175646"
-                  className="w-full sm:w-auto bg-white/15 hover:bg-white/25 border border-white/30 text-white px-5 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  href="tel:+5535991175646"
+                  title="Ligar para Romanelli Mudanças"
+                  className="text-xs font-bold text-blue-200 hover:text-white transition-colors flex items-center gap-1.5 pt-0.5"
                 >
-                  <PhoneCall className="w-4 h-4 text-blue-200" />
-                  <span>(35) 99117-5646</span>
+                  <PhoneCall className="w-3.5 h-3.5 text-blue-300" />
+                  <span>Ou se preferir, ligue: (35) 99117-5646</span>
                 </a>
               </div>
             </div>
@@ -1485,8 +1387,8 @@ export default function App() {
                   rel="noopener noreferrer"
                   className="w-full bg-[#004DD1] hover:bg-[#003CA3] text-white py-3 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  Chamar no WhatsApp
+                  <WhatsAppIcon className="w-4 h-4 fill-white" />
+                  <span>Chamar no WhatsApp</span>
                 </a>
               </div>
             </div>
@@ -1516,7 +1418,7 @@ export default function App() {
                 <Logo light={true} />
               </div>
               <p className="text-gray-400 text-sm max-w-sm leading-relaxed">
-                Especialistas em mudanças residenciais, comerciais, industriais e pinturas em Pouso Alegre - MG e toda região. Fazer uma mudança nunca foi tão fácil!
+                Especialistas em mudanças residenciais, comerciais, industriais e pinturas em Pouso Alegre - MG e todo o sul de minas. Fazer uma mudança nunca foi tão fácil!
               </p>
 
               {/* Social Icons Wrapper */}
@@ -1576,7 +1478,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Floating WhatsApp Button - Official Brand Logo & Full Descriptive Title without abbreviations */}
+      {/* Floating WhatsApp Button */}
       <a 
         href="https://api.whatsapp.com/send?phone=5535991175646&text=Olá,%20vim%20pelo%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20orçamento!"
         target="_blank"
@@ -1588,7 +1490,6 @@ export default function App() {
         }`}
         title="Solicitar Orçamento no WhatsApp"
       >
-        {/* Official WhatsApp SVG Logo */}
         <svg 
           className="w-6 h-6 sm:w-7 sm:h-7 fill-white shrink-0 group-hover:scale-110 transition-transform" 
           viewBox="0 0 24 24" 
@@ -1621,7 +1522,7 @@ export default function App() {
                   <Calculator className="w-4 h-4" />
                 </span>
                 <span className="text-xs font-black uppercase tracking-wider text-[#004DD1]">
-                  Simulador Inteligente Romanelli
+                  Solicitação de Orçamento - Romanelli Mudanças
                 </span>
               </div>
               <h3 className="text-2xl font-black text-gray-900 tracking-tight">
@@ -2352,7 +2253,7 @@ export default function App() {
                     className="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-4 px-6 rounded-2xl font-black text-base sm:text-lg shadow-[0_10px_25px_rgba(16,185,129,0.45)] hover:shadow-[0_15px_35px_rgba(16,185,129,0.65)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group animate-pulse"
                   >
                     <div className="w-9 h-9 rounded-xl bg-white/25 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <MessageCircle className="w-5 h-5 text-white fill-current" />
+                      <WhatsAppIcon className="w-5 h-5 fill-white text-white" />
                     </div>
                     <span>ABRIR CONVERSA NO WHATSAPP COM ESTE ID</span>
                   </button>
